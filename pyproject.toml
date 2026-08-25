@@ -1,0 +1,13 @@
+[project]
+name = "rotor-scope"
+version = "0.1.0"
+description = "Read-only P&L, fill and spread-capture monitoring for Sera market makers running rotor."
+requires-python = ">=3.10"
+dependencies = ["httpx>=0.27"]
+
+[project.scripts]
+rotor-scope = "rotor_scope.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
