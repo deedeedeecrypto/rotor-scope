@@ -7,23 +7,22 @@ Built on Sera. `built-on-sera`
 
 ## Why
 
-rotor tells you what is quoted right now. It does not tell you whether you are making
-money, because it does not keep the data. Its own state store says so in the source:
+rotor is built for the live loop: quote, fill, move on. Its state store is scoped to
+exactly that job — currently-open orders and pending returns, replaced every tick — and
+its own source says so plainly:
 
 > Tiny unresolved-state store; this is not a trade-history database.
 
-It holds currently-open orders and pending returns, and replaces them every tick.
-Telegram gets a ping per quote and nothing aggregated. So a maker running rotor cannot
-answer three basic questions:
+rotor-scope is the other half of the picture. It keeps the history locally, so a maker
+can also answer the questions that only make sense over a stretch of time:
 
-1. **Am I actually making money?** Realised P&L per market, FIFO-matched.
-2. **Am I capturing the spread I configured?** You set `fixed_bps = 50`. Are you
-   earning 50, or are you being picked off?
-3. **Are my quotes even getting hit?** Perfect capture on two fills a day is not a
-   working strategy.
+1. **Realised P&L per market**, FIFO-matched.
+2. **Spread capture against the reference mid.** You set `fixed_bps = 50` — this tells
+   you what you actually earned.
+3. **Fill rate.** Perfect capture on two fills a day is worth knowing about.
 
-rotor-scope answers those from Sera's own `/fills`, `/orders` and `/balances`. It
-requires no change to rotor and works for anyone already running it.
+It reads Sera's own `/fills`, `/orders` and `/balances`, needs no change to rotor, and
+works for anyone already running it.
 
 ## Run it in one command, with no credentials
 
@@ -43,8 +42,8 @@ code that runs on live data.
   XSGD/USDC    realised     377.7172 USDC  capture    32.0 bps  fills 120  inventory   2605.00
 ```
 
-Configured spread was 50 bps. Realised capture is 31. **That gap is the whole point of
-the tool** — nothing else in this stack reports it.
+Configured spread was 50 bps. Realised capture is 31. **Surfacing that gap is the whole
+point of the tool.**
 
 ## Run it on your own account
 
@@ -59,8 +58,8 @@ rotor-scope report    # build the HTML
 ```
 
 Run `sync` on a cron. Sera paginates `/fills`; the store deduplicates on `fill_id`, so
-re-syncing is safe and history accumulates locally even though Sera's own retention is
-not something you control.
+re-syncing is safe and your own history accumulates locally for as long as you want to
+keep it.
 
 ## It cannot touch your funds
 
@@ -86,12 +85,11 @@ same column as money actually earned.
 
 **Capture bps** measures each fill against the reference mid from `/fx/rate`. A sell
 above mid and a buy below mid both count positive. Consistently below your configured
-`fixed_bps` means your quotes are being picked off — the maker is buying the losing side
-of an informed flow.
+`fixed_bps` is a signal to look at how your quotes are being selected.
 
-**Gas** is tracked separately per market. Sera charges a flat fee per swap regardless of
-size, so on small clips it is the dominant cost and a strategy can show positive capture
-while losing money net.
+**Gas** is tracked separately per market. Sera charges per transaction rather than as a
+percentage of notional, so it belongs in the model as a fixed term, not a rate. Size it
+in per trade and the net column stays honest at every clip size.
 
 ## Layout
 
@@ -101,14 +99,13 @@ rotor_scope/
   client.py   read-only Sera REST client (GET only)
   models.py   Decimal-only money types; raw base units converted once
   pnl.py      FIFO realised P&L, spread capture, fill rate
-  store.py    sqlite; the history rotor throws away
+  store.py    sqlite; your local trade history
   demo.py     deterministic synthetic fills
   report.py   single-file HTML, no CDN, opens from disk
 ```
 
 Money is `Decimal` everywhere. There is no `float` in any code path that touches an
 amount.
-
 ## Licence
 
 MIT.
