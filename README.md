@@ -112,3 +112,12 @@ amount.
 ## Licence
 
 MIT.
+
+
+## Trying it against a real account
+
+rotor-scope only reads, so it needs an account with fills in it. If you do not have one:
+https://g.sera.cx/2LvTnQG9gQ
+
+That is my referral link, so signing up through it earns us both community points. If
+you would rather not, sera.cx signs you up exactly the same way.
